@@ -1,329 +1,380 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Drawing;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace suiko2edit
 {
-public partial class MainForm : Form
-{
-string isoFileName;
-IndexedValues charData;
-IndexedValues weaponData;
-int selectedCharacter=-1,selectedWeapon=-1;
-NumericUpDown []weaponNumericUpDown;
+    public partial class MainForm : Form
+    {
+        private string _isoFileName;
+        private IndexedValues _charData;
+        private IndexedValues _weaponData;
+        private int _selectedCharacter = -1, _selectedWeapon = -1;
+        private NumericUpDown[] _weaponNumericUpDown;
+        public List<CharacterData> _characters;
+        bool _stopUpdate = false;
 
-//=============================================================================
-/// <summary></summary>
-public MainForm()
-{
-	InitializeComponent();
+        //=============================================================================
+        /// <summary></summary>
+        public MainForm()
+        {
+            InitializeComponent();
 
-	// load data
-	charData=new IndexedValues(0x12);
-	charData.loadDataFromString (UnfilteredAddressData.PlayerOffsetsString);
+            // load data
+            _charData = new IndexedValues(0x12);
+            _charData.loadDataFromString(UnfilteredAddressData.PlayerOffsetsString);
 
-	weaponData=new IndexedValues(0x10);
-	weaponData.loadDataFromString (UnfilteredAddressData.WeaponTypeListString);
-	
+            _weaponData = new IndexedValues(0x10);
+            _weaponData.loadDataFromString(UnfilteredAddressData.WeaponTypeListString);
 
-	// fill stat growth comboboxes
-	fillStatGrowthComboBox (m_strGr);
-	fillStatGrowthComboBox (m_magGr);
-	fillStatGrowthComboBox (m_protGr);
-	fillStatGrowthComboBox (m_mdfGr);
-	fillStatGrowthComboBox (m_techGr);
-	fillStatGrowthComboBox (m_spdGr);
-	fillStatGrowthComboBox (m_luckGr);
-	fillHpGrowthComboBox (m_hpGr);
+            // fill stat growth comboboxes
+            fillStatGrowthComboBox(m_strGr);
+            fillStatGrowthComboBox(m_magGr);
+            fillStatGrowthComboBox(m_protGr);
+            fillStatGrowthComboBox(m_mdfGr);
+            fillStatGrowthComboBox(m_techGr);
+            fillStatGrowthComboBox(m_spdGr);
+            fillStatGrowthComboBox(m_luckGr);
+            fillHpGrowthComboBox(m_hpGr);
 
-	fillRuneAffinity (m_fireAff);
-	fillRuneAffinity (m_waterAff);
-	fillRuneAffinity (m_windAff);
-	fillRuneAffinity (m_earthAff);
-	fillRuneAffinity (m_lightningAff);
-	fillRuneAffinity (m_resurrAff);
-	fillRuneAffinity (m_darkAff);
-	fillRuneAffinity (m_brightAff);
+            fillRuneAffinity(m_fireAff);
+            fillRuneAffinity(m_waterAff);
+            fillRuneAffinity(m_windAff);
+            fillRuneAffinity(m_earthAff);
+            fillRuneAffinity(m_lightningAff);
+            fillRuneAffinity(m_resurrAff);
+            fillRuneAffinity(m_darkAff);
+            fillRuneAffinity(m_brightAff);
 
-	generateWeaponUI ();
+            generateWeaponUI();
+        }
 
-}
+        //=============================================================================
+        /// <summary></summary>
+        private void fillStatGrowthComboBox(ComboBox cb)
+        {
+            cb.Items.Clear();
 
-//=============================================================================
-/// <summary></summary>
-void fillStatGrowthComboBox (ComboBox cb)
-{
-	cb.Items.Clear();
+            // ranks as described in http://suikosource.com/phpBB3/viewtopic.php?f=9&p=159542&sid=187be27182c79ea61b08df9d9aebff6f#p159542
+            // and mixed with stats named at http://www.suikosource.com/games/gs2/guides/statgrowth.php
+            cb.Items.AddRange(new List<string>() {
+        "(0) E",
+        "(1) D",
+        "(2) D+",
+        "(3) C",
+        "(4) C+",
+        "(5) B",
+        "(6) B+",
+        "(7) A+",
+        "(8) S",
+        "(9) early ....",
+        "(A) early 1-20 big increase, decrease after 20",
+        "(B) ?B",
+        "(C) ?C",
+        "(D) Sigfried",
+        "(E) Later, big increase after L60",
+        "(F) Abizboah"
+        }.ToArray());
+        }
 
-	// ranks as described in http://suikosource.com/phpBB3/viewtopic.php?f=9&p=159542&sid=187be27182c79ea61b08df9d9aebff6f#p159542
-	// and mixed with stats named at http://www.suikosource.com/games/gs2/guides/statgrowth.php
-	cb.Items.AddRange (new List<string>() {
-		"(0) E",
-		"(1) D",
-		"(2) D+",
-		"(3) C",
-		"(4) C+",
-		"(5) B",
-		"(6) B+",
-		"(7) A+",
-		"(8) S",
-		"(9) early ....",
-		"(A) early 1-20 big increase, decrease after 20",
-		"(B) ?B",
-		"(C) ?C",
-		"(D) Sigfried",
-		"(E) Later, big increase after L60",
-		"(F) Abizboah"
-		
-		}.ToArray());
-}
+        //=============================================================================
+        /// <summary></summary>
+        private void fillHpGrowthComboBox(ComboBox cb)
+        {
+            cb.Items.Clear();
 
+            // ranks as described in http://suikosource.com/phpBB3/viewtopic.php?f=9&p=159542&sid=187be27182c79ea61b08df9d9aebff6f#p159542
+            // and mixed with stats named at http://www.suikosource.com/games/gs2/guides/statgrowth.php
+            cb.Items.AddRange(new List<string>() {
+        "(0) F",
+        "(1) E",
+        "(2) D+",
+        "(3) C",
+        "(4) C+",
+        "(5) B",
+        "(6) B+",
+        "(7) A+",
+        "(8) S",
+        "(9) early ....",
+        "(A) early 1-20 big increase, decrease after 20",
+        "(B) ?B",
+        "(C) ?C",
+        "(D) Sigfried",
+        "(E) Later, big increase after L60",
+        "(F) Abizboah"
+        }.ToArray());
+        }
 
-//=============================================================================
-/// <summary></summary>
-void fillHpGrowthComboBox (ComboBox cb)
-{
-	cb.Items.Clear();
+        //=============================================================================
+        /// <summary></summary>
+        private void fillRuneAffinity(ComboBox cb)
+        {
+            cb.Items.Clear();
 
-	// ranks as described in http://suikosource.com/phpBB3/viewtopic.php?f=9&p=159542&sid=187be27182c79ea61b08df9d9aebff6f#p159542
-	// and mixed with stats named at http://www.suikosource.com/games/gs2/guides/statgrowth.php
-	cb.Items.AddRange (new List<string>() {
-		"(0) F",
-		"(1) E",
-		"(2) D+",
-		"(3) C",
-		"(4) C+",
-		"(5) B",
-		"(6) B+",
-		"(7) A+",
-		"(8) S",
-		"(9) early ....",
-		"(A) early 1-20 big increase, decrease after 20",
-		"(B) ?B",
-		"(C) ?C",
-		"(D) Sigfried",
-		"(E) Later, big increase after L60",
-		"(F) Abizboah"
-		
-		}.ToArray());
-}
+            // ranks as described in http://suikosource.com/phpBB3/viewtopic.php?f=9&p=159542&sid=187be27182c79ea61b08df9d9aebff6f#p159542
+            // mixed with http://www.suikosource.com/games/gs2/guides/affinities.php
+            cb.Items.AddRange(new List<string>() {
+        "(0) F - None ",
+        "(1) A - 40% more dmg",
+        "(2) B - 20% more dmg",
+        "(3) C - Normal dmg ",
+        "(4) D - 20% less dmg",
+        "(5) B - 20 more dmg, may backfire",
+        "(6) ?",
+        "(7) ?",
+        "(8) ?",
+        "(9) ?",
+        "(A) ?",
+        "(B) ?",
+        "(C) ?",
+        "(D) ?",
+        "(E) ?",
+        "(F) ?",
+        }.ToArray());
+        }
 
+        //=============================================================================
+        /// <summary></summary>
+        private void MainForm_Shown(object sender, EventArgs e)
+        {
+            populateCharacterNames();
+            populateWeaponTypes();
 
+            // open file on startup
+            openISOToolStripMenuItem_Click(sender, e);
+        }
 
+        //=============================================================================
+        /// <summary>Fills the list of characters</summary>
+        private void populateCharacterNames()
+        {
+            m_characterName.Items.Clear();
 
-//=============================================================================
-/// <summary></summary>
-void fillRuneAffinity (ComboBox cb)
-{
-	cb.Items.Clear();
+            foreach (var it in _charData.Characters)
+            {
+                m_characterName.Items.Add(it.name);
+            }
+        }
 
-	// ranks as described in http://suikosource.com/phpBB3/viewtopic.php?f=9&p=159542&sid=187be27182c79ea61b08df9d9aebff6f#p159542
-	// mixed with http://www.suikosource.com/games/gs2/guides/affinities.php
-	cb.Items.AddRange (new List<string>() {
-		"(0) F - None ",
-		"(1) A - 40% more dmg",
-		"(2) B - 20% more dmg",
-		"(3) C - Normal dmg ",
-		"(4) D - 20% less dmg",
-		"(5) B - 20 more dmg, may backfire",
-		"(6) ?",
-		"(7) ?",
-		"(8) ?",
-		"(9) ?",
-		"(A) ?",
-		"(B) ?",
-		"(C) ?",
-		"(D) ?",
-		"(E) ?",
-		"(F) ?",
-		
-		}.ToArray());
-}
+        //=============================================================================
+        /// <summary>Fills the character stats</summary>
+        private void populateCharacterStats()
+        {
+            if (_selectedCharacter == -1) return;
 
-//=============================================================================
-/// <summary></summary>
-private void MainForm_Shown(object sender, EventArgs e)
-{
-	populateCharacterNames();
-	populateWeaponTypes();
+            var character = _characters[_selectedCharacter];
 
-	// open file on startup
-	openISOToolStripMenuItem_Click(sender,e);
-}
+            m_strGr.SelectedIndex = character.Str;
+            m_magGr.SelectedIndex = character.Mag;
+            m_protGr.SelectedIndex = character.Prot;
+            m_mdfGr.SelectedIndex = character.Mdf;
+            m_techGr.SelectedIndex = character.Tech;
+            m_spdGr.SelectedIndex = character.Spd;
+            m_luckGr.SelectedIndex = character.Luck;
+            m_hpGr.SelectedIndex = character.Hp;
 
-//=============================================================================
-/// <summary>Fills the list of characters</summary>
-void populateCharacterNames ()
-{
-	m_characterName.Items.Clear();
+            m_fireAff.SelectedIndex = character.FireAff;
+            m_waterAff.SelectedIndex = character.WaterAff;
+            m_windAff.SelectedIndex = character.WindAff;
+            m_earthAff.SelectedIndex = character.EarthAff;
+            m_lightningAff.SelectedIndex = character.LightningAff;
+            m_resurrAff.SelectedIndex = character.ResurrectionAff;
+            m_darkAff.SelectedIndex = character.DarkAff;
+            m_brightAff.SelectedIndex = character.BrightAff;
 
-	foreach (var it in charData.characters)
-	{
-		m_characterName.Items.Add (it.name);
-	}
-}
+            m_headLev.Value = character.HeadLev;
+            m_rhLev.Value = character.RHLev;
+            m_lhLev.Value = character.LHLev;
+            m_rawData.Text = character.RawDataString;
+        }
 
-//=============================================================================
-/// <summary>Fills the character stats</summary>
-void populateCharacterStats ()
-{
-	if (selectedCharacter==-1) return;
+        //=============================================================================
+        /// <summary></summary>
+        private void openISOToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            OpenFileDialog ofd = new OpenFileDialog();
+            ofd.Title = "Open Suikoden 2 USA iso";
+            ofd.Filter = "*.iso|*.iso";
+            if (ofd.ShowDialog() != DialogResult.OK) return;
 
-	var rawData=charData.getDataForCharacter (selectedCharacter);
+            _isoFileName = ofd.FileName;
 
-	m_strGr.SelectedIndex=		high (rawData[0]);
-	m_magGr.SelectedIndex=		low (rawData[0]);
-	m_protGr.SelectedIndex=		high (rawData[1]);
-	m_mdfGr.SelectedIndex=		low (rawData[1]);
-	m_techGr.SelectedIndex=		high (rawData[2]);
-	m_spdGr.SelectedIndex=		low (rawData[2]);
-	m_luckGr.SelectedIndex=		high (rawData[3]);
-	m_hpGr.SelectedIndex=		low (rawData[3]);
+            if (!checkIsoIsUSASuiko2(_isoFileName))
+            {
+                MessageBox.Show("Can only work with suikoden 2 USA.");
+                _isoFileName = null;
+            }
 
-	m_fireAff.SelectedIndex=	high (rawData[8]);
-	m_waterAff.SelectedIndex=	low (rawData[8]);
-	m_windAff.SelectedIndex=	high (rawData[9]);
-	m_earthAff.SelectedIndex=	low (rawData[9]);
-	m_lightningAff.SelectedIndex=	high (rawData[10]);
-	m_resurrAff.SelectedIndex=	low (rawData[10]);
-	m_darkAff.SelectedIndex=	high (rawData[11]);
-	m_brightAff.SelectedIndex=	low (rawData[11]);
+            _charData.loadDataFromISO(_isoFileName);
+            _weaponData.loadDataFromISO(_isoFileName);
 
-	m_headLev.Value=rawData[0xe];
-	m_rhLev.Value=rawData[0xf];
-	m_lhLev.Value=rawData[0x10];
+            _characters = _charData.GetCharacters();
+            _selectedCharacter = -1;
+            m_characterName.SelectedIndex = -1;
+        }
 
-	// build raw data
-	string str="Raw data:\r\n";
-	for (int i=0;i<charData.BlockDataLength;i++)
-	{
-		str+=String.Format ("{0} - {1}      (0x{1:X2})\r\n",i,rawData[i]);
-	}
-	m_rawData.Text=str;
+        //=============================================================================
+        /// <summary>Checks if fileName points to a USA Suikoden2 file</summary>
+        private bool checkIsoIsUSASuiko2(string fileName)
+        {
+            // read a part of the ISO.
+            byte[] isoData = Tools.readBlock(fileName, 0xcaed, 13);
 
-int low (byte val) { return val&0xf; }
-int high (byte val) { return (val>>4)&0xf; }
-}
+            //This part contains "SLUS_009.58;1" in my copy, which should identify Suikoden 2 USA
+            if (Tools.bytesToString(isoData) != "SLUS_009.58;1") return false;
 
+            // further checks if needed.
 
-//=============================================================================
-/// <summary></summary>
-private void openISOToolStripMenuItem_Click(object sender, EventArgs e)
-{
-	OpenFileDialog ofd=new OpenFileDialog ();
-	ofd.Title="Open Suikoden 2 USA iso";
-	ofd.Filter="*.iso|*.iso";
-	if (ofd.ShowDialog ()!=DialogResult.OK) return;
-	
-	isoFileName=ofd.FileName;
+            // OK, it's suikoden 2 USA
+            return true;
+        }
 
-	if (!checkIsoIsUSASuiko2(isoFileName)) 
-	{
-		MessageBox.Show ("Can only work with suikoden 2 USA.");
-		isoFileName=null;
-	}
+        //=============================================================================
+        /// <summary></summary>
+        private void m_characterName_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            _stopUpdate = true;
+            _selectedCharacter = m_characterName.SelectedIndex;
+            populateCharacterStats();
+            _stopUpdate = false;
+        }
 
-	charData.loadDataFromISO (isoFileName);
-	weaponData.loadDataFromISO (isoFileName);
-}
+        //=============================================================================
+        /// <summary></summary>
+        private void m_weaponList_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            _selectedWeapon = m_weaponList.SelectedIndex;
+            populateWeaponStats();
+        }
 
-//=============================================================================
-/// <summary>Checks if fileName points to a USA Suikoden2 file</summary>
-bool checkIsoIsUSASuiko2 (string fileName)
-{
-	// read a part of the ISO. 
-	byte []isoData=Tools.readBlock (fileName,0xcaed,13);
+        //=============================================================================
+        /// <summary>Fills the list of characters</summary>
+        private void populateWeaponTypes()
+        {
+            m_weaponList.Items.Clear();
 
-	//This part contains "SLUS_009.58;1" in my copy, which should identify Suikoden 2 USA
-	if (Tools.bytesToString (isoData)!="SLUS_009.58;1") return false;
+            foreach (var it in _weaponData.Characters)
+            {
+                m_weaponList.Items.Add(it.name);
+            }
+        }
 
-	// further checks if needed.
+        //=============================================================================
+        /// <summary>Fills the character stats</summary>
+        private void populateWeaponStats()
+        {
+            int i;
 
-	// OK, it's suikoden 2 USA
-	return true;
-}
+            if (_selectedWeapon == -1) return;
 
-//=============================================================================
-/// <summary></summary>
-private void m_characterName_SelectedIndexChanged(object sender, EventArgs e)
-{
-	selectedCharacter=m_characterName.SelectedIndex;
-	populateCharacterStats();
-}
+            var rawData = _weaponData.getDataForCharacter(_selectedWeapon);
+            for (i = 0; i < _weaponNumericUpDown.Length; i++)
+            {
+                _weaponNumericUpDown[i].Value = rawData[i];
+            }
+        }
 
-//=============================================================================
-/// <summary></summary>
-private void m_weaponList_SelectedIndexChanged(object sender, EventArgs e)
-{
-	selectedWeapon=m_weaponList.SelectedIndex;
-	populateWeaponStats();
-}
+        private void btnMaxAll_Click(object sender, EventArgs e)
+        {
+            foreach (var character in _characters)
+            {
+                character.Str = 8;
+                character.Mag = 8;
+                character.Prot = 8;
+                character.Mdf = 8;
+                character.Tech = 8;
+                character.Spd = 8;
+                character.Luck = 8;
+                character.Hp = 8;
 
+                character.FireAff = 1;
+                character.WaterAff = 1;
+                character.WindAff = 1;
+                character.EarthAff = 1;
+                character.LightningAff = 1;
+                character.ResurrectionAff = 1;
+                character.DarkAff = 1;
+                character.BrightAff = 1;
 
-//=============================================================================
-/// <summary>Fills the list of characters</summary>
-void populateWeaponTypes ()
-{
-	m_weaponList.Items.Clear();
+                character.HeadLev = 1;
+                character.RHLev = 1;
+                character.LHLev = 1;
+                character.UpdateRawData();
+                m_rawData.Text = character.RawDataString;
+            }
+            _stopUpdate = true;
+            populateCharacterStats();
+            _stopUpdate = false;
+        }
 
-	foreach (var it in weaponData.characters)
-	{
-		m_weaponList.Items.Add (it.name);
-	}
-}
+        private void stat_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (_stopUpdate)
+                return;
+            var character = this._characters[_selectedCharacter];
+            character.Str = (byte)m_strGr.SelectedIndex;
+            character.Mag = (byte)m_magGr.SelectedIndex;
+            character.Prot = (byte)m_protGr.SelectedIndex;
+            character.Mdf = (byte)m_mdfGr.SelectedIndex;
+            character.Tech = (byte)m_techGr.SelectedIndex;
+            character.Spd = (byte)m_spdGr.SelectedIndex;
+            character.Luck = (byte)m_luckGr.SelectedIndex;
+            character.Hp = (byte)m_hpGr.SelectedIndex;
 
-//=============================================================================
-/// <summary>Fills the character stats</summary>
-void populateWeaponStats ()
-{
-int i;
+            character.FireAff = (byte)m_fireAff.SelectedIndex;
+            character.WaterAff = (byte)m_waterAff.SelectedIndex;
+            character.WindAff = (byte)m_windAff.SelectedIndex;
+            character.EarthAff = (byte)m_earthAff.SelectedIndex;
+            character.LightningAff = (byte)m_lightningAff.SelectedIndex;
+            character.ResurrectionAff = (byte)m_resurrAff.SelectedIndex;
+            character.DarkAff = (byte)m_darkAff.SelectedIndex;
+            character.BrightAff = (byte)m_brightAff.SelectedIndex;
 
-	if (selectedWeapon==-1) return;
+            character.HeadLev = (byte)m_headLev.Value;
+            character.RHLev = (byte)m_rhLev.Value;
+            character.LHLev = (byte)m_lhLev.Value;
+            character.UpdateRawData();
+            m_rawData.Text = character.RawDataString;
 
-	var rawData=weaponData.getDataForCharacter (selectedWeapon);
-	for (i=0;i<weaponNumericUpDown.Length;i++)
-	{
-		weaponNumericUpDown[i].Value=rawData[i];
-	}
+        }
 
-}
+        private void BtnSave_Click(object sender, EventArgs e)
+        {
+            _charData.Save(this._characters);
 
-//=============================================================================
-/// <summary></summary>
-void generateWeaponUI ()
-{
-int i;
-int x,y;
-const int WeaponLevels=16;
+            MessageBox.Show("Save Successful");
+        }
 
-	weaponNumericUpDown=new NumericUpDown[WeaponLevels];
-	for (i=0;i<WeaponLevels;i++)
-	{
-		x=16+(i/8)*128;
-		y=40+(i%8)*32;
+        //=============================================================================
+        /// <summary></summary>
+        private void generateWeaponUI()
+        {
+            int i;
+            int x, y;
+            const int WeaponLevels = 16;
 
-		Label label=new Label();
-		label.Text=$"Lev{i+1}";
-		label.Location=new Point (x,y);
-		label.AutoSize=true;
-		m_weaponTab.Controls.Add (label);
+            _weaponNumericUpDown = new NumericUpDown[WeaponLevels];
+            for (i = 0; i < WeaponLevels; i++)
+            {
+                x = 16 + (i / 8) * 128;
+                y = 40 + (i % 8) * 32;
 
-		NumericUpDown num=new NumericUpDown ();
-		num.Location=new Point (x+42,y-2);
-		num.Size=new Size (40,20);
-		num.Minimum=0;
-		num.Maximum=255;
-		m_weaponTab.Controls.Add (num);
+                Label label = new Label();
+                label.Text = $"Lev{i + 1}";
+                label.Location = new Point(x, y);
+                label.AutoSize = true;
+                m_weaponTab.Controls.Add(label);
 
-		weaponNumericUpDown[i]=num;
-	}
-}
-}
+                NumericUpDown num = new NumericUpDown();
+                num.Location = new Point(x + 42, y - 2);
+                num.Size = new Size(40, 20);
+                num.Minimum = 0;
+                num.Maximum = 255;
+                m_weaponTab.Controls.Add(num);
+
+                _weaponNumericUpDown[i] = num;
+            }
+        }
+    }
 }

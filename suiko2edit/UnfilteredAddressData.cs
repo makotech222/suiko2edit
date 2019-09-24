@@ -1,20 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace suiko2edit
+﻿namespace suiko2edit
 {
-
-
-//=============================================================================
-/// <summary>Contains data offsets as strings supplied by 
-/// Atonias @ http://suikosource.com/phpBB3/viewtopic.php?f=9&p=159542&sid=187be27182c79ea61b08df9d9aebff6f#p159542 </summary>
-static class UnfilteredAddressData
-{
-
-public const string PlayerOffsetsString=@"
+    //=============================================================================
+    /// <summary>Contains data offsets as strings supplied by
+    /// Atonias @ http://suikosource.com/phpBB3/viewtopic.php?f=9&p=159542&sid=187be27182c79ea61b08df9d9aebff6f#p159542 </summary>
+    internal static class UnfilteredAddressData
+    {
+        public const string PlayerOffsetsString = @"
 Hero - 111E1E7A
 Flik - 111E1E8C
 Viktor - 111E1E9E
@@ -97,8 +88,7 @@ Chuchara - 111E23F6
 Jowy 2 - 111E2408
 ";
 
-
-public const string WeaponTypeListString=@"
+        public const string WeaponTypeListString = @"
 One-handed Swords - 111FCD74
 Two-handed Swords - 111FCD85
 Spears - 111FCD96
@@ -118,5 +108,5 @@ Other4 - 111FCE73
 Other5 - 111FCE84
 Other6 - 111FCE95
 ";
-}
+    }
 }
